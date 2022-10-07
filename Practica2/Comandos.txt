@@ -1,0 +1,696 @@
+----------R0----------
+//// LEVANTAR PUERTOS ////
+
+int s0/3/0
+no shutdown
+ip address 3.3.3.1 255.255.255.0
+
+int s0/3/1
+no shutdown
+ip address 4.4.4.1 255.255.255.0
+
+int g0/0
+no shutdown
+ip address 2.2.2.1 255.255.255.0
+
+//// ENRUTAMIENTO BGP ////
+router bgp 100
+network 3.3.3.0 mask 255.255.255.0
+network 4.4.4.0 mask 255.255.255.0
+
+neighbor 3.3.3.2 remote-as 200
+neighbor 4.4.4.2 remote-as 300
+
+network 1.1.1.1 mask 255.255.255.0
+network 192.168.26.0 mask 255.255.255.192
+network 192.168.26.64 mask 255.255.255.192
+network 192.168.26.128 mask 255.255.255.192
+network 192.168.26.192 mask 255.255.255.192
+
+//// ENRUTAMIENTO OSPF ////
+router ospf 200
+network 2.2.2.0 0.0.0.255 area 0
+
+//// REDISTRIBUCION ////
+router ospf 200
+redistribute bgp 100 metric 1 subnets
+
+router bgp 100
+redistribute ospf 200
+
+
+----------R1----------
+//// LEVANTAR PUERTOS ////
+
+int s0/3/0
+no shutdown
+ip address 5.5.5.2 255.255.255.0
+
+int s0/3/1
+no shutdown
+ip address 3.3.3.2 255.255.255.0
+
+int g0/0
+no shutdown
+ip address 7.7.7.1 255.255.255.0
+
+//// ENRUTAMIENTO BGP ////
+router bgp 200
+network 3.3.3.0 mask 255.255.255.0
+network 5.5.5.0 mask 255.255.255.0
+
+neighbor 3.3.3.1 remote-as 100
+neighbor 5.5.5.1 remote-as 300
+
+network 8.8.8.0 mask 255.255.255.0
+network 9.9.9.0 mask 255.255.255.0
+network 10.10.10.0 mask 255.255.255.0
+network 11.11.11.0 mask 255.255.255.0
+network 192.168.56.0 mask 255.255.255.192
+network 192.168.56.64 mask 255.255.255.192
+network 192.168.56.128 mask 255.255.255.192
+network 192.168.56.192 mask 255.255.255.192
+
+
+//// ENRUTAMIENTO OSPF ////
+router ospf 300
+network 7.7.7.0 0.0.0.255 area 0
+
+//// REDISTRIBUCION ////
+router ospf 300
+redistribute bgp 200 metric 1 subnets
+
+router bgp 200
+redistribute ospf 300
+
+
+
+
+----------R2----------
+//// LEVANTAR PUERTOS ////
+
+int s0/3/0
+no shutdown
+ip address 4.4.4.2 255.255.255.0
+
+int s0/3/1
+no shutdown
+ip address 5.5.5.1 255.255.255.0
+
+int g0/0
+no shutdown
+ip address 6.6.6.1 255.255.255.0
+
+//// ENRUTAMIENTO BGP ////
+router bgp 300
+network 4.4.4.0 mask 255.255.255.0
+network 5.5.5.0 mask 255.255.255.0
+
+neighbor 4.4.4.1 remote-as 100
+neighbor 5.5.5.2 remote-as 200
+
+network 12.12.12.0 mask 255.255.255.0
+network 13.13.13.0 mask 255.255.255.0
+network 14.14.14.0 mask 255.255.255.0
+network 192.168.86.0 mask 255.255.255.192
+network 192.168.86.64 mask 255.255.255.192
+network 192.168.86.128 mask 255.255.255.192
+
+//// ENRUTAMIENTO EIGRP ////
+router eigrp 100
+network 6.6.6.0 0.0.0.255
+no auto-summary
+
+//// REDISTRIBUCION ////
+router bgp 300
+redistribute eigrp 100
+
+router eigrp 100
+redistribute bgp 300 metric 1 1 1 1 1
+
+
+
+
+----------R3----------
+//// LEVANTAR PUERTOS ////
+int g0/0
+no shutdown
+ip address 2.2.2.2 255.255.255.0
+
+int g0/1
+no shutdown
+ip address 1.1.1.1 255.255.255.0
+
+//// ENRUTAMIENTO RIP ////
+router rip
+default-information originate
+version 2
+network 1.1.1.0
+no auto-summary
+
+//// ENRUTAMIENTO OSPF ////
+router ospf 100
+network 2.2.2.0 0.0.0.255 area 0
+
+//// REDISTRIBUCION ////
+router rip 
+redistribute ospf 100 metric 15
+
+router ospf 100
+redistribute rip subnets
+
+/// IP6 ///
+ipv6 unicast-routing
+ipv6 router rip redv6
+
+int g0/2
+ipv6 address 2001:DB8:B:1::2/64
+ipv6 rip redv6 enable
+no shutdown
+
+int Tunnel0
+ipv6 address 3000::1/112
+ipv6 rip redv6 enable 
+tunnel source g0/0
+tunnel destination 6.6.6.2
+tunnel mode ipv6ip
+
+----------R4----------
+//// LEVANTAR PUERTOS ////
+
+int g0/0
+no shutdown
+ip address 1.1.1.4 255.255.255.0
+
+int g0/1
+no shutdown
+ip address 192.168.26.129 255.255.255.192
+
+//// ENRUTAMIENTO RIP ////
+router rip
+default-information originate
+version 2
+network 1.1.1.0
+network 192.168.26.128
+no auto-summary 
+
+//// ACCESS LIST ////
+access-list 101 permit ip 192.168.26.128 0.0.0.63 192.168.26.192 0.0.0.63
+access-list 101 permit ip 192.168.26.128 0.0.0.63 192.168.56.0 0.0.0.63
+access-list 101 permit ip 192.168.26.128 0.0.0.63 192.168.86.0 0.0.0.63
+access-list 101 permit ip 192.168.26.128 0.0.0.63 192.168.86.64 0.0.0.63
+access-list 101 deny ip any any
+
+access-list 102 permit icmp 192.168.86.64 0.0.0.63 any echo
+access-list 102 permit icmp any any echo-reply
+access-list 102 deny ip any any
+
+int g0/1 
+ip access-group 101 in
+ip access-group 102 out
+
+
+
+
+----------R5----------
+//// LEVANTAR PUERTOS ////
+
+int g0/0
+no shutdown
+ip address 1.1.1.2 255.255.255.0
+
+int g0/1
+no shutdown
+ip address 192.168.26.1 255.255.255.192
+
+//// ENRUTAMIENTO RIP ////
+router rip
+default-information originate
+version 2
+network 1.1.1.0
+network 192.168.26.0
+no auto-summary 
+
+//// ACCESS LIST ////
+access-list 1 permit 192.168.86.64 0.0.0.63
+access-list 1 deny any
+access-list 101 permit icmp any any echo-reply
+access-list 101 deny ip any any 
+
+int g0/1
+ip access-group 1 out
+ip access-group 101 in
+
+
+
+
+----------R6----------
+//// LEVANTAR PUERTOS ////
+
+int g0/0
+no shutdown
+ip address 1.1.1.3 255.255.255.0
+
+int g0/1
+no shutdown
+ip address 192.168.26.65 255.255.255.192
+
+//// ENRUTAMIENTO RIP ////
+router rip
+default-information originate
+version 2
+network 1.1.1.0
+network 192.168.26.64
+no auto-summary 
+
+//// ACCESS LIST ////
+access-list 101 permit ip 192.168.26.64 0.0.0.63 192.168.26.192 0.0.0.63
+access-list 101 permit ip 192.168.26.64 0.0.0.63 192.168.56.0 0.0.0.63
+access-list 101 permit ip 192.168.26.64 0.0.0.63 192.168.86.0 0.0.0.63
+access-list 101 permit ip 192.168.26.64 0.0.0.63 192.168.86.64 0.0.0.63
+access-list 101 deny ip any any
+
+access-list 102 permit icmp 192.168.86.64 0.0.0.63 any echo
+access-list 102 permit icmp any any echo-reply
+access-list 102 deny ip any any
+
+int g0/1 
+ip access-group 101 in
+ip access-group 102 out
+
+
+
+
+----------R7----------
+//// LEVANTAR PUERTOS ////
+
+int g0/0
+no shutdown
+ip address 1.1.1.5 255.255.255.0
+
+int g0/1
+no shutdown
+ip address 192.168.26.193 255.255.255.192
+
+//// ENRUTAMIENTO RIP ////
+router rip
+default-information originate
+version 2
+network 1.1.1.0
+network 192.168.26.192
+no auto-summary 
+
+//// ACCESS LIST ////
+access-list 101 permit ip 192.168.26.192 0.0.0.63 192.168.86.64 0.0.0.63
+access-list 101 permit ip 192.168.26.192 0.0.0.63 192.168.26.64 0.0.0.63
+access-list 101 permit ip 192.168.26.192 0.0.0.63 192.168.26.128 0.0.0.63
+access-list 101 permit ip 192.168.26.192 0.0.0.63 192.168.26.192 0.0.0.63
+access-list 101 deny ip any any
+
+access-list 102 permit icmp 192.168.86.64 0.0.0.63 any echo
+access-list 102 permit icmp 192.168.26.64 0.0.0.63 any echo
+access-list 102 permit icmp 192.168.26.128 0.0.0.63 any echo
+access-list 102 permit icmp 192.168.26.192 0.0.0.63 any echo
+access-list 102 permit icmp any any echo-reply
+access-list 102 deny ip any any
+
+int g0/1
+ip access-group 101 in
+ip access-group 102 out
+
+
+
+
+----------R8----------
+//// LEVANTAR PUERTOS ////
+
+int g0/0
+no shutdown
+ip address 7.7.7.2 255.255.255.0
+
+int s0/3/0
+no shutdown
+ip address 8.8.8.1 255.255.255.0
+
+int g0/1
+no shutdown
+ip address 9.9.9.1 255.255.255.0
+
+int g0/2
+no shutdown
+ip address 10.10.10.1 255.255.255.0
+
+int s0/3/1
+no shutdown
+ip address 11.11.11.1 255.255.255.0
+
+//// ENRUTAMIENTO EIGRP ////
+router eigrp 100
+network 8.8.8.0 0.0.0.255
+network 9.9.9.0 0.0.0.255
+network 10.10.10.0 0.0.0.255
+network 11.11.11.0 0.0.0.255
+no auto-summary
+
+//// ENRUTAMIENTO OSPF ////
+router ospf 400
+network 7.7.7.0 0.0.0.255 area 0
+
+//// REDISTRIBUCION ////
+router eigrp 100
+redistribute ospf 400 metric 255 1 1 1 1
+
+router ospf 400
+redistribute eigrp 100 metric 1 subnets
+
+
+
+
+
+----------R9----------
+//// LEVANTAR PUERTOS ////
+
+int s0/3/0
+no shutdown
+ip address 8.8.8.2 255.255.255.0
+
+int g0/0
+no shutdown
+ip address 192.168.56.1 255.255.255.192
+
+//// ENRUTAMIENTO EIGRP ////
+router eigrp 100
+network 8.8.8.0 0.0.0.255
+network 192.168.56.0 0.0.0.63
+no auto-summary
+
+//// ACCESS LIST ////
+access-list 101 permit ip 192.168.56.0 0.0.0.63 192.168.86.64 0.0.0.63
+access-list 101 permit ip 192.168.56.0 0.0.0.63 192.168.26.64 0.0.0.63
+access-list 101 permit ip 192.168.56.0 0.0.0.63 192.168.26.128 0.0.0.63
+access-list 101 permit ip 192.168.56.0 0.0.0.63 192.168.26.192 0.0.0.63
+access-list 101 deny ip any any
+
+access-list 102 permit icmp 192.168.86.64 0.0.0.63 any echo
+access-list 102 permit icmp 192.168.26.64 0.0.0.63 any echo
+access-list 102 permit icmp 192.168.26.128 0.0.0.63 any echo
+access-list 102 permit icmp 192.168.26.192 0.0.0.63 any echo
+access-list 102 permit icmp any any echo-reply
+access-list 102 deny ip any any
+
+int g0/0
+ip access-group 101 in
+ip access-group 102 out
+
+
+
+
+----------R10----------
+//// LEVANTAR PUERTOS ////
+
+int g0/1
+no shutdown
+ip address 9.9.9.2 255.255.255.0
+
+int g0/0
+no shutdown
+ip address 192.168.56.65 255.255.255.192
+
+//// ENRUTAMIENTO EIGRP ////
+router eigrp 100
+network 9.9.9.0 0.0.0.255
+network 192.168.56.64 0.0.0.63
+no auto-summary
+
+//// ACCESS LIST ////
+access-list 1 permit 192.168.86.64 0.0.0.63
+access-list 1 deny any
+access-list 101 permit icmp any any echo-reply
+access-list 101 deny ip any any 
+
+int g0/0
+ip access-group 1 out
+ip access-group 101 in
+
+
+----------R11----------
+//// LEVANTAR PUERTOS ////
+
+int g0/2
+no shutdown
+ip address 10.10.10.2 255.255.255.0
+
+int g0/0
+no shutdown
+ip address 192.168.56.129 255.255.255.192
+
+//// ENRUTAMIENTO EIGRP ////
+router eigrp 100
+network 10.10.10.0 0.0.0.255
+network 192.168.56.128 0.0.0.63
+no auto-summary
+
+//// ACCESS LIST ////
+access-list 1 permit 192.168.86.64 0.0.0.63
+access-list 1 deny any
+access-list 101 permit icmp any any echo-reply
+access-list 101 deny ip any any 
+
+int g0/0
+ip access-group 1 out
+ip access-group 101 in
+
+
+
+
+----------R12----------
+//// LEVANTAR PUERTOS ////
+
+int s0/3/1
+no shutdown
+ip address 11.11.11.2 255.255.255.0
+
+int g0/0
+no shutdown
+ip address 192.168.56.193 255.255.255.192
+
+//// ENRUTAMIENTO EIGRP ////
+router eigrp 100
+network 11.11.11.0 0.0.0.255
+network 192.168.56.192 0.0.0.63
+no auto-summary
+
+//// ACCESS LIST ////
+access-list 101 permit ip 192.168.56.192 0.0.0.63 192.168.26.192 0.0.0.63
+access-list 101 permit ip 192.168.56.192 0.0.0.63 192.168.56.0 0.0.0.63
+access-list 101 permit ip 192.168.56.192 0.0.0.63 192.168.86.0 0.0.0.63
+access-list 101 permit ip 192.168.56.192 0.0.0.63 192.168.86.64 0.0.0.63
+access-list 101 deny ip any any
+
+access-list 102 permit icmp 192.168.86.64 0.0.0.63 any echo
+access-list 102 permit icmp any any echo-reply
+access-list 102 deny ip any any
+
+int g0/0
+ip access-group 101 in
+ip access-group 102 out
+
+
+
+
+----------R13----------
+//// LEVANTAR PUERTOS ////
+int g0/0
+no shutdown
+ip address 6.6.6.2 255.255.255.0
+
+int g0/1
+no shutdown
+ip address 12.12.12.1 255.255.255.0
+
+int g0/2
+no shutdown
+ip address 14.14.14.1 255.255.255.0
+
+int s0/3/0
+no shutdown
+ip address 13.13.13.1 255.255.255.0
+
+//// ENRUTAMIENTO RIP ////
+router rip
+default-information originate
+version 2
+network 12.12.12.0
+network 13.13.13.0
+network 14.14.14.0
+no auto-summary
+
+//// ENRUTAMIENTO EIGRP ////
+router eigrp 100
+network 6.6.6.0 0.0.0.255
+no auto-summary
+
+//// REDISTRIBUCION ////
+router eigrp 100
+redistribute rip metric 255 1 1 1 1
+
+router rip 
+redistribute eigrp 100 metric 15
+
+/// IP6 ///
+ipv6 unicast-routing
+ipv6 router rip redv6
+
+int s0/3/1
+ipv6 address 2001:DB8:B:2::2/64
+ipv6 rip redv6 enable
+no shutdown
+
+int Tunnel0
+ipv6 address 3000::2/112
+ipv6 rip redv6 enable 
+tunnel source g0/0
+tunnel destination 2.2.2.2
+tunnel mode ipv6ip
+
+
+
+
+----------R14----------
+//// LEVANTAR PUERTOS ////
+
+int g0/0
+no shutdown
+ip address 192.168.86.1 255.255.255.192
+
+int g0/1
+no shutdown
+ip address 12.12.12.2 255.255.255.0
+
+//// ENRUTAMIENTO RIP ////
+router rip
+default-information originate
+version 2
+network 12.12.12.0
+network 192.168.86.0
+no auto-summary
+
+//// ACCESS LIST ////
+access-list 101 permit ip 192.168.86.0 0.0.0.63 192.168.86.64 0.0.0.63
+access-list 101 permit ip 192.168.86.0 0.0.0.63 192.168.26.64 0.0.0.63
+access-list 101 permit ip 192.168.86.0 0.0.0.63 192.168.26.128 0.0.0.63
+access-list 101 permit ip 192.168.86.0 0.0.0.63 192.168.26.192 0.0.0.63
+access-list 101 deny ip any any
+
+access-list 102 permit icmp 192.168.86.64 0.0.0.63 any echo
+access-list 102 permit icmp 192.168.26.64 0.0.0.63 any echo
+access-list 102 permit icmp 192.168.26.128 0.0.0.63 any echo
+access-list 102 permit icmp 192.168.26.192 0.0.0.63 any echo
+access-list 102 permit icmp any any echo-reply
+access-list 102 deny ip any any
+
+int g0/0
+ip access-group 101 in
+ip access-group 102 out
+
+
+
+
+----------R16----------
+//// LEVANTAR PUERTOS ////
+
+int g0/0
+no shutdown
+ip address 192.168.86.65 255.255.255.192
+
+int s0/3/0
+no shutdown
+ip address 13.13.13.2 255.255.255.0
+
+//// ENRUTAMIENTO RIP ////
+router rip
+default-information originate
+version 2
+network 13.13.13.0
+network 192.168.86.64
+no auto-summary
+
+//// ACCESS LIST ////
+access-list 101 permit icmp any any echo-reply
+int g0/0 
+ip access-group 101 out
+
+
+
+
+----------R15----------
+//// LEVANTAR PUERTOS ////
+
+int g0/0
+no shutdown
+ip address 192.168.86.129 255.255.255.192
+
+int g0/2
+no shutdown
+ip address 14.14.14.2 255.255.255.0
+
+//// ENRUTAMIENTO RIP ////
+router rip
+default-information originate
+version 2
+network 14.14.14.0
+network 192.168.86.128
+no auto-summary
+
+//// ACCESS LIST ////
+access-list 1 permit 192.168.86.64 0.0.0.63
+access-list 1 deny any
+access-list 101 permit icmp any any echo-reply
+access-list 101 deny ip any any 
+
+int g0/0
+ip access-group 1 out
+ip access-group 101 in
+
+
+
+
+
+----------R17----------
+/// IP6 ///
+ipv6 unicast-routing
+ipv6 router rip redv6
+
+int g0/0
+ipv6 address 2001:DB8:B:1::1/64
+ipv6 rip redv6 enable
+no shutdown
+
+int g0/1
+ipv6 address 2001:DB8:A:1::1/64
+ipv6 rip redv6 enable
+no shutdown
+
+//// ACCESS LIST ////
+access-list 101 permit icmp any any echo-reply
+int g0/1
+ip access-group 101 out
+
+
+
+
+----------R18----------
+/// IP6 ///
+ipv6 unicast-routing
+ipv6 router rip redv6
+
+int s0/3/0
+ipv6 address 2001:DB8:B:2::1/64
+ipv6 rip redv6 enable
+no shutdown
+
+int g0/0
+ipv6 address 2001:DB8:A:2::1/64
+ipv6 rip redv6 enable
+no shutdown
+
