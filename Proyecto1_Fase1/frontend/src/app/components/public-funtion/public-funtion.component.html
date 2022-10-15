@@ -1,0 +1,40 @@
+
+<h1 align="center">Funciones Publicas</h1>
+
+<div class="container" style="width: 100%; overflow-y:scroll; height: 500px;">
+    <div class="card-group mt-3" >
+        
+        <div *ngFor="let i of public_funtion;"style="position:relative; margin: 2%;  width: 40%" >
+            <div class="card bg-light mb-3" >
+                <div class="container" >
+                    <div class="card-group mt-3" >
+                        <div class="card-header" align="center" style="width: 40%;"><img [src]="i.imagen" style="width: 100%; height: 150px; border-radius: 100%;" /></div>
+                
+                        <div class="card-body" style="width: 60%;">
+                            <h4 class="card-title" align="left" style="height: 30%;">{{i.nombre}}</h4>
+                            <p class="card-text" align="left" style="width: 100%; overflow-y:scroll; height: 70%;">{{i.descripcion}}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<br>
+<h1 align="center">Ultimas Noticias</h1>
+
+
+<div class="container" style="width: 100%; overflow-y:scroll; height: 400px;">
+    <div class="card-group mt-3" >
+        <div *ngFor="let i of last_news;"style="margin: 1%;  width: 90%; " >
+            <div class="card bg-light mb-3" >
+                <div class="card-body" style="width: 100%;">
+                    <h4 class="card-title" align="left" style="height: 30%;">{{i.nombre}}</h4>
+                    <p class="card-text" align="left" style="width: 100%; overflow-y:scroll; height: 150px;">{{i.descripcion}}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<br><br>

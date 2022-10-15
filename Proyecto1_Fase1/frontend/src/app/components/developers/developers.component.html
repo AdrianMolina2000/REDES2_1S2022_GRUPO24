@@ -1,0 +1,21 @@
+<h1 align="center">Desarrolladores</h1>
+
+<div class="container" >
+    <div class="card-group mt-3" >
+        
+        <div *ngFor="let i of developers;"style="margin: 2%;  max-width: 25rem;" >
+            <div class="card bg-light mb-3" >
+                <div class="card-header" align="center"><img [src]="i.imagen" style="max-width: 80%; height: 150px; border-radius: 100%;" /></div>
+                
+                <div class="card-body">
+                    <h4 class="card-title" align="center">{{i.puesto}}</h4>
+                    <p class="card-text" align="left">NOMBRE: {{i.nombre}}</p>
+                    <p class="card-text" align="left">CARNET: {{i.carne}}</p>
+                    <p class="card-text" align="left">CURSO: {{i.curso}}</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
