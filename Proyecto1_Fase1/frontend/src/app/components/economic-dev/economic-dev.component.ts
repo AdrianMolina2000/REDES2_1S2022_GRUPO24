@@ -2,7 +2,15 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { ApexAxisChartSeries, ApexChart, ApexDataLabels, ApexFill, ApexGrid, ApexLegend, ApexPlotOptions, ApexStroke, ApexTitleSubtitle, ApexTooltip, ApexXAxis, ApexYAxis, ChartComponent } from 'ng-apexcharts';
 import { ConexionService } from 'src/app/services/conexion.service';
 
+export interface Moneda{
+  nombre: String,
+  valor: Number[]
+}
 
+export interface Ucrontime{
+  valor: String,
+  fecha : String
+}
 
 
 @Component({
@@ -32,34 +40,107 @@ export class EconomicDevComponent implements OnInit {
   G2_stroke: ApexStroke;
   G2_legend: ApexLegend;
   G2_title: ApexTitleSubtitle;
+
+  meses:String[] = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep"
+  ]
   
   constructor(private Connect : ConexionService) { 
    
   }
 
   ngOnInit(): void {
-
+    this.GRAFICA1();
+    this.GRAFICA2();
     this.Connect.getData('/DesarrolloEconomico').subscribe(
       res => {
         var tmpjson =JSON.parse(JSON.stringify(res))
+       
+        var lista_monedas:Moneda[] = []
         for(let i in tmpjson){
-
+          var look = lista_monedas.find(t => t.nombre == tmpjson[i].nombre);
+          if(!(look == undefined)){
+            look.valor[parseInt(tmpjson[i].fecha) - 1] = parseFloat(tmpjson[i].valor)
+          }
+          else{
+            var tmp1 = {
+              nombre: tmpjson[i].nombre,
+              valor: [0,0,0,0,0,0,0,0,0],
+            }
+            tmp1.valor[parseInt(tmpjson[i].fecha) - 1] = parseFloat(tmpjson[i].valor)
+            lista_monedas.push(tmp1)
+          }
+          
         }
+
+        var lista_general = [];
+        var lista_ucroncoin = [];
+        // AGREGAR DATOS A LA TABLA
+        for(let i in lista_monedas){
+          var datass:any = {
+            name: lista_monedas[i].nombre,
+            data: lista_monedas[i].valor
+          };
+
+          var prome:any = 0.0;
+          for(var j in lista_monedas[i].valor){
+            prome += lista_monedas[i].valor[j];
+          }
+          //console.log('promedio -> ', lista_monedas[i].valor.length)
+          var ucron:any = {
+            name: lista_monedas[i].nombre,
+            promedio: (prome/lista_monedas[i].valor.length).toFixed(4)
+          };
+
+          lista_general.push(datass);
+          lista_ucroncoin.push(ucron);
+        };
+        this.G1_series = lista_general;
+
+        
+        var lista_aux = []
+        var categorias = []
+        //console.log(lista_ucroncoin)
+        for(let k in lista_ucroncoin){
+          lista_aux.push(lista_ucroncoin[k].promedio)
+          categorias.push(lista_ucroncoin[k].name)
+        }
+        
+        this.G2_series = [
+          {
+            name: "",
+            data: lista_aux
+          }
+        ];
+
+        this.G2_xaxis = {
+          title: {
+            text: "MONEDA"
+          },
+          categories: categorias
+        };
+
+        //console.log(this.G2_series)
+        
+
       }
     )
-
-
-
-    this.GRAFICA1();
-    this.GRAFICA2();
+    
+    
+    
   }
 
   GRAFICA1() {
     this.G1_series = [
-      {
-        name: "Desktops",
-        data: [10, 41, 35, 51, 49, 62, 69, 91, 148]
-      }
+      
     ];
 
     this.G1_charts = {
@@ -97,12 +178,15 @@ export class EconomicDevComponent implements OnInit {
         "Jun",
         "Jul",
         "Aug",
-        "Sep"
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dic"
       ]
     };
 
     this.G1_title = {
-      text: "GRAFICA 1",
+      text: "UCRONCOIN A TRAVEZ DEL TIEMPO POR MONEDA",
       align: "left"
     };
 
@@ -112,8 +196,8 @@ export class EconomicDevComponent implements OnInit {
   GRAFICA2() {
     this.G2_series = [
       {
-        name: "Net Profit",
-        data: [44, 55, 57, 56, 61, 58, 63, 60, 66]
+        name: "Ucron",
+        data: []
       }
     ];
     this.G2_chart= {
@@ -139,20 +223,11 @@ export class EconomicDevComponent implements OnInit {
         text: "XAXIS"
       },
       categories: [
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct"
       ]
     };
     this.G2_yaxis = {
       title: {
-        text: "YXIS"
+        text: "UCRONCOIN"
       }
     };
     this.G2_fill = {
@@ -161,12 +236,12 @@ export class EconomicDevComponent implements OnInit {
     this.G2_tooltip = {
       y: {
         formatter: function(val) {
-          return "$ " + val + " thousands";
+          return "1 UCRONCOIN = " + val + "";
         }
       }
     }
     this.G2_title = {
-      text: "GRAFICA 2",
+      text: "GRAFICA DE PROMEDIO DE UCRONCOIN POR MONEDA",
       align: "left"
     };
   };
